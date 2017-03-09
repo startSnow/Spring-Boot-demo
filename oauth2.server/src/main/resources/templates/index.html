@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<title>Login</title>
+<meta charset="UTF-8"></meta>
+<link rel="stylesheet" th:href="@{/webjars/bootstrap/2.3.2/css/bootstrap.min.css}"
+	href="webjars/bootstrap/2.3.2/css/bootstrap.min.css" />
+</head>
+    <body>
+	<div class="container">
+		<div class="navbar">
+			<div class="navbar-inner">
+				<ul class="nav">
+					<li><a th:href="@{/}" href="home.html"> Home </a></li>
+					<li><a th:href="@{/logout}" href="logout"> Logout </a></li>
+				</ul>
+			</div>
+		</div>
+<div class="container" ng-show="home.authenticated">
+  Logged in as: <span ng-bind="home.user"></span>
+  <div>
+    <button ng-click="home.logout()" class="btn btn-primary">Logout</button>
+  </div>
+</div>
+	</div>
+    </body>
+</html>
