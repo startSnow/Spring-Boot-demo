@@ -1,31 +1,36 @@
-<!DOCTYPE html>
-
-<html xmlns="http://www.w3.org/1999/xhtml">
-
+<!DOCTYPE html >
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>OAuth confirm_access</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Login</title>
+<meta charset="UTF-8"></meta>
+<link rel="stylesheet"
+	th:href="@{/webjars/bootstrap/3.2.0/css/bootstrap.min.css}"
+	href="/webjars/bootstrap/2.3.2/css/bootstrap.min.css" />
 </head>
 <body>
-
-        <h2>Please Confirm</h2>
-
+<div class="panel panel-default">
+	<div class="panel-heading">
+		<h3 class="panel-title">
+确认授权
+		</h3>
+	</div>
+	<div class="panel-body">
     <p>
-        You hereby authorize '<span th:text="${authorizationRequest.clientId}"/>' to access your protected resources.
+      您在此授权“<span th:text="${authorizationRequest.clientId}"/>”访问您的受保护的资源。
     </p>
-
     <form action="#" th:action="@{/oauth/authorize}" method="post">
         <ul>
    <li th:each="scope : ${scopes}"> <span th:text="${scope.key}"/>
-             <input type="radio" th:name="${scope.key}" value="true">Approve</input>
-             <input type="radio" th:name="${scope.key}" value="false">Deny</input>
+             <input type="radio" th:name="${scope.key}" value="true"   th:checked="true">授权</input>
+             <input type="radio" th:name="${scope.key}" value="false">否认</input>
             </li>
-
         </ul>
-
-        <input name="user_oauth_approval" value="true" type="hidden" />
-        <input name='authorize' value='Authorize' type='submit'/>
+        <input name="user_oauth_approval" value="true" type="hidden"  />
+        <input name='authorize' value='授权' type='submit' class="btn btn-success"/>
     </form>
+	</div>
+</div>
+   
    
 
 </body>

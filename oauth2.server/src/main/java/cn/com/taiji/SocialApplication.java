@@ -32,6 +32,8 @@ import org.springframework.web.accept.ContentNegotiationManager;
 import org.springframework.web.servlet.View;
 import org.springframework.web.servlet.ViewResolver;
 import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
+import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 import org.springframework.web.servlet.view.ContentNegotiatingViewResolver;
 import org.springframework.web.servlet.view.json.MappingJackson2JsonView;
 import org.thymeleaf.dialect.IDialect;
@@ -164,10 +166,17 @@ public class SocialApplication extends WebSecurityConfigurerAdapter {
 	public AuthenticationManager authenticationManager() {
 		return new ProviderManager(Arrays.asList(authenticationProvider));
 	}
+	
+	@Configuration
+	public class WebMvcConfig extends WebMvcConfigurerAdapter {
+	    @Override
+	    public void addViewControllers(ViewControllerRegistry registry) {
+	        registry.addViewController("/login").setViewName("login");
+	    }
+	}
 
 	@Override  
     protected void configure(HttpSecurity http) throws Exception {  
-  
         // @formatter:off  
                  http  
             .authorizeRequests()  
