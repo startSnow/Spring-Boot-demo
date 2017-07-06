@@ -22,7 +22,10 @@ public class OAuthController {
 		return "auth";
 	}
 	
-	
+	@RequestMapping("/unauthenticated")
+	public String unauthenticated() {
+	  return "redirect:/?error=true";
+	}
 
 
 }

@@ -25,7 +25,7 @@
 </nav>
 		<h1 th:text="${title}">Title</h1>
 			<span th:text="|${#authentication.name},您好|">您好</span>
-					<a th:if="${#authentication.name}!=null"  th:href="logout">注销s</a>
+					<a th:if="${#authentication.name}!=null"  th:href="@{/logout}" href="logout">注销s</a>
 							<a th:if="${#authentication.name}==null" th:href="login.html">登录</a>
 							    <p>Logged in as: <span th:text="${#httpServletRequest.remoteUser}">demo</span></p>
 						

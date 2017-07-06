@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
+import org.springframework.boot.autoconfigure.security.oauth2.resource.AuthoritiesExtractor;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -21,13 +23,18 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.oauth2.client.OAuth2ClientContext;
+import org.springframework.security.oauth2.client.OAuth2RestOperations;
+import org.springframework.security.oauth2.client.OAuth2RestTemplate;
+import org.springframework.security.oauth2.client.resource.OAuth2ProtectedResourceDetails;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.EnableResourceServer;
 import org.springframework.security.oauth2.config.annotation.web.configuration.ResourceServerConfigurerAdapter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.accept.ContentNegotiationManager;
 import org.springframework.web.servlet.View;
 import org.springframework.web.servlet.ViewResolver;
@@ -49,6 +56,7 @@ import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
  */
 @SpringBootApplication
 @EnableAuthorizationServer
+@EnableDiscoveryClient
 @Order(SecurityProperties.ACCESS_OVERRIDE_ORDER)
 public class SocialApplication extends WebSecurityConfigurerAdapter {
 	public static void main(String[] args) {
@@ -178,7 +186,7 @@ public class SocialApplication extends WebSecurityConfigurerAdapter {
 	@Override  
     protected void configure(HttpSecurity http) throws Exception {  
         // @formatter:off  
-                 http  
+/*                 http  
             .authorizeRequests()  
                   .antMatchers("/", "/login**", "/webjars/**").permitAll()  
                 .and()  
@@ -188,15 +196,23 @@ public class SocialApplication extends WebSecurityConfigurerAdapter {
             .csrf()  
                 .requireCsrfProtectionMatcher(new AntPathRequestMatcher("/oauth/authorize"))  
                 .disable()  
-            .logout()  
-                .logoutUrl("/logout")  
+        	.logout()
+				.logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
+				.deleteCookies("JSESSIONID").invalidateHttpSession(true)
                 .logoutSuccessUrl("/login")  
                 .and()  
             .formLogin()  
                 .loginProcessingUrl("/login")  
                 .failureUrl("/login?authentication_error=true")  
-                .loginPage("/login");  
+                .loginPage("/login");  */
         // @formatter:on  
+                 http
+ 				.formLogin().loginPage("/login").permitAll()
+ 			.and()
+ 				.requestMatchers().antMatchers("/login", "/oauth/authorize", "/oauth/confirm_access")
+ 			.and()
+ 				.authorizeRequests().anyRequest().authenticated();
+                 http.csrf().disable();
   
     }  
 	
@@ -208,9 +224,33 @@ public class SocialApplication extends WebSecurityConfigurerAdapter {
 		@Override
 		public void configure(HttpSecurity http) throws Exception {
 			http.antMatcher("/me").authorizeRequests().anyRequest()
-					.authenticated().and().formLogin().loginPage("/login")
-					.permitAll();
+					.authenticated();
 		}
 	}
-
+	/**
+	 * 
+	 * @Description: Generating a 401 in the Server
+	 * @param template
+	 * @return AuthoritiesExtractor  
+	 * @throws
+	 * @author chixue
+	 * @date 2017年4月5日
+	 */
+	@Bean
+	public AuthoritiesExtractor authoritiesExtractor(OAuth2RestOperations template) {
+	  return map -> {
+	    String url = (String) map.get("organizations_url");
+	    @SuppressWarnings("unchecked")
+	    List<Map<String, Object>> orgs = template.getForObject(url, List.class);
+	    if (orgs.stream()
+	        .anyMatch(org -> "spring-projects".equals(org.get("login")))) {
+	      return AuthorityUtils.commaSeparatedStringToAuthorityList("ROLE_USER");
+	    }
+	    throw new BadCredentialsException("Not in Spring Projects origanization");
+	  };
+	}
+	@Bean
+	public OAuth2RestTemplate oauth2RestTemplate(OAuth2ProtectedResourceDetails resource, OAuth2ClientContext context) {
+		return new OAuth2RestTemplate(resource, context);
+	}
 }

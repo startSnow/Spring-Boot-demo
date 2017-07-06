@@ -13,7 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.oauth2.client.EnableOAuth2Sso;
-import org.springframework.boot.autoconfigure.security.oauth2.resource.UserInfoTokenServices;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.cloud.netflix.zuul.EnableZuulProxy;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
@@ -23,6 +25,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.accept.ContentNegotiationManager;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.View;
 import org.springframework.web.servlet.ViewResolver;
 import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
@@ -31,24 +34,44 @@ import org.springframework.web.servlet.view.json.MappingJackson2JsonView;
 import org.thymeleaf.dialect.IDialect;
 import org.thymeleaf.spring4.view.ThymeleafViewResolver;
 
-import cn.com.taiji.oauth2.client.conf.MySsoLogoutHandler;
+import cn.com.taiji.oauth2.client.conf.CustomLogoutSuccessHandler;
+import cn.com.taiji.oauth2.client.conf.CustomSsoLogoutHandler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
 
 @SpringBootApplication
+@EnableZuulProxy
+@EnableDiscoveryClient
 @EnableOAuth2Sso
 public class ClientApplication extends WebSecurityConfigurerAdapter {
 	public static void main(String[] args) {
-		UserInfoTokenServices tokenServces;
-		org.springframework.security.oauth2.client.DefaultOAuth2ClientContext context;
 		SpringApplication.run(ClientApplication.class, args);
 	}
-
 	@Autowired
-	private MySsoLogoutHandler mySsoLogoutHandler;
-
+	CustomSsoLogoutHandler customSsoLogoutHandler;
+	@Autowired
+	CustomLogoutSuccessHandler customLogoutSuccessHandler;
+	
+	@Bean
+	@LoadBalanced
+	RestTemplate restTemplate() {
+		return new RestTemplate();
+	}
+/*	@Override
+	public void configure(HttpSecurity http) throws Exception {
+		// @formatter:off
+		http
+			.logout().and()
+			.authorizeRequests()
+				.antMatchers("/index.html", "/home.html", "/", "/login").permitAll()
+				.anyRequest().authenticated()
+				.and()
+			.csrf()
+				.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
+			// @formatter:on
+	}*/
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		http.authorizeRequests()
@@ -58,7 +81,7 @@ public class ClientApplication extends WebSecurityConfigurerAdapter {
 				.and()
 				.logout()
 				.logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
-				.addLogoutHandler(mySsoLogoutHandler).deleteCookies("JSESSIONID").invalidateHttpSession(true)
+				.addLogoutHandler(customSsoLogoutHandler).deleteCookies("JSESSIONID").invalidateHttpSession(true)
 				.logoutSuccessUrl("/anonymous")
 				.and()
 				.csrf()

@@ -64,7 +64,7 @@ import org.springframework.security.oauth2.provider.token.store.KeyStoreKeyFacto
 	        tokenServices.setSupportRefreshToken(false);
 	        tokenServices.setClientDetailsService(endpoints.getClientDetailsService());
 	        tokenServices.setTokenEnhancer(endpoints.getTokenEnhancer());
-	        tokenServices.setAccessTokenValiditySeconds( (int) TimeUnit.MINUTES.toSeconds(1)); // 30天
+	        tokenServices.setAccessTokenValiditySeconds( (int) TimeUnit.MINUTES.toSeconds(1)); //分钟
 	        endpoints.tokenServices(tokenServices);
 
 	    }

@@ -1,6 +1,7 @@
 package cn.com.taiji.oauth2.server.security;
 
 import java.util.Collections;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +10,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 /**
  * 
@@ -25,9 +27,13 @@ public class SsoAuthProvider implements AuthenticationProvider {
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         log.debug("自定义provider调用");
+        List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("read"));
 
-        // 返回一个Token对象表示登陆成功
+        String username = authentication.getName();
+        System.out.println(username);
+        
         return new UsernamePasswordAuthenticationToken(authentication.getPrincipal(), authentication.getCredentials(), Collections.<GrantedAuthority>emptyList());
+        
     }
 
     @Override

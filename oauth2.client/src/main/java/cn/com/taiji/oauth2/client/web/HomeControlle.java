@@ -2,8 +2,14 @@ package cn.com.taiji.oauth2.client.web;
 
 import java.security.Principal;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.provider.authentication.OAuth2AuthenticationDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 /**
  * 
  * 类名称：HomeControlle   
@@ -23,4 +29,19 @@ public class HomeControlle {
 	  public String anonymous(){
 	    return "anonymous";
 	  }
+	
+	@RequestMapping({ "/getToken" })
+	@ResponseBody
+	  public String anonymous(HttpServletRequest httpServletRequest,
+				HttpServletResponse httpServletResponse,
+				Authentication authentication){
+		Object details = authentication.getDetails();
+		String accessToken="";
+			if (details.getClass().isAssignableFrom(
+					OAuth2AuthenticationDetails.class)) {
+				 accessToken = ((OAuth2AuthenticationDetails) details).getTokenValue();
+			}
+	    return accessToken;
+	  }
+	
 }
