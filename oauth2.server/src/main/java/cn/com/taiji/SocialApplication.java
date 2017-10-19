@@ -28,6 +28,8 @@ import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.oauth2.client.OAuth2ClientContext;
 import org.springframework.security.oauth2.client.OAuth2RestOperations;
 import org.springframework.security.oauth2.client.OAuth2RestTemplate;
@@ -174,10 +176,14 @@ public class SocialApplication extends WebSecurityConfigurerAdapter {
 	public AuthenticationManager authenticationManager() {
 		return new ProviderManager(Arrays.asList(authenticationProvider));
 	}
-	
+	    
+	@Bean
+	public SessionRegistry sessionRegistry(){    
+	    return new SessionRegistryImpl();    
+	}
 	@Configuration
 	public class WebMvcConfig extends WebMvcConfigurerAdapter {
-	    @Override
+    @Override
 	    public void addViewControllers(ViewControllerRegistry registry) {
 	        registry.addViewController("/login").setViewName("login");
 	    }
@@ -185,35 +191,13 @@ public class SocialApplication extends WebSecurityConfigurerAdapter {
 
 	@Override  
     protected void configure(HttpSecurity http) throws Exception {  
-        // @formatter:off  
-/*                 http  
-            .authorizeRequests()  
-                  .antMatchers("/", "/login**", "/webjars/**").permitAll()  
-                .and()  
-            .exceptionHandling()  
-                .accessDeniedPage("/login?authorization_error=true")  
-                .and()  
-            .csrf()  
-                .requireCsrfProtectionMatcher(new AntPathRequestMatcher("/oauth/authorize"))  
-                .disable()  
-        	.logout()
-				.logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
-				.deleteCookies("JSESSIONID").invalidateHttpSession(true)
-                .logoutSuccessUrl("/login")  
-                .and()  
-            .formLogin()  
-                .loginProcessingUrl("/login")  
-                .failureUrl("/login?authentication_error=true")  
-                .loginPage("/login");  */
-        // @formatter:on  
                  http
  				.formLogin().loginPage("/login").permitAll()
  			.and()
  				.requestMatchers().antMatchers("/login", "/oauth/authorize", "/oauth/confirm_access")
  			.and()
- 				.authorizeRequests().anyRequest().authenticated();
-                 http.csrf().disable();
-  
+ 				.authorizeRequests().anyRequest().authenticated()
+                 .and().sessionManagement().maximumSessions(2).expiredUrl("/login?expired").sessionRegistry(sessionRegistry());  
     }  
 	
 	

@@ -1,22 +1,21 @@
 package cn.com.taiji.oauth2.server.api;
 
+import java.io.IOException;
 import java.security.Principal;
-import java.util.Enumeration;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
+import org.springframework.security.oauth2.provider.OAuth2Request;
+import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-
-import cn.com.taiji.oauth2.server.service.TService;
 /**
  * 
  * 类名称：AuthenticationController   
@@ -27,38 +26,63 @@ import cn.com.taiji.oauth2.server.service.TService;
  */
 @RestController
 public class AuthenticationController {
-	public static final Logger logger = LoggerFactory
-			.getLogger(AuthenticationController.class);
+	public static final Logger logger = LoggerFactory.getLogger(AuthenticationController.class);
 	@Autowired
-	TService tservice;
+	private TokenStore tokenStore;
+	/**
+	 * 
+	 * @Description: 返回用户对象
+	 * @param principal
+	 * @return Map<String,String>  
+	 * @throws
+	 * @author chixue
+	 * @date 2017年7月14日
+	 */
 	@RequestMapping({ "/user", "/me" })
 	public Map<String, String> user(Principal principal) {
-		OAuth2Authentication auth=(OAuth2Authentication) principal;
-	
-		System.out.println("-------------------"+	auth.getName()+"-----"+	auth.getOAuth2Request().getClientId());
-/*		System.out.println("当前登录用户的ip：" + auth.getRemoteAddress());
-		System.out.println("当前登录用户的sessionID：" + auth.getSessionId()); //Principal可转换为User
-*/
-
 	  Map<String, String> map = new LinkedHashMap<>();
 	  map.put("name", principal.getName());
 	  return map;
 	}
-	@RequestMapping({ "/client" })
-	@ResponseBody
-	public Map<String, String> user(String access_token) {
+	//TODO 返回token 给子系统让他来请求用户的详细信息?
+	/**
+	 * 
+	 * @Description: 为单点登录准备返回用户信息
+	 * @param access_token
+	 * @param response void  
+	 * @throws
+	 * @author chixue
+	 * @date 2017年7月14日
+	 */
+	@RequestMapping({ "/user_info" })
+	public void user(String access_token,HttpServletResponse response) {
+		OAuth2Authentication auth=tokenStore.readAuthentication(access_token);
+		OAuth2Request request=auth.getOAuth2Request();
 	  Map<String, String> map = new LinkedHashMap<>();
-	 String clientId= tservice.getClientId(access_token);
-	  map.put("clientId",clientId);
-	  return map;
+	  map.put("name", auth.getUserAuthentication().getName());
+	  try {
+		response.sendRedirect(request.getRedirectUri()+"?name="+auth.getUserAuthentication().getName());
+	} catch (IOException e) {
+		e.printStackTrace();
 	}
-	@RequestMapping({ "/userInfo" })
-	@ResponseBody
-	public Map<String, String> users(String access_token) {
-		 Map<String, String> map = new LinkedHashMap<>();
-		 String userName= tservice.getUserName(access_token.toString());
-		  map.put("clientId",userName);
-	  return map;
 	}
-	
+/**
+ * 
+ * @Description: 根据token 返回用户的信息
+ * @param access_token
+ * @param response
+ * @return Map  
+ * @throws
+ * @author chixue
+ * @date 2017年7月14日
+ */
+	@RequestMapping(value = "/oauth/userInfo", method = RequestMethod.POST)
+	public Map userInfo(String access_token,HttpServletResponse response) {
+		OAuth2Authentication auth=tokenStore.readAuthentication(access_token);
+	  Map<String, String> map = new LinkedHashMap<>();
+	  map.put("name", auth.getUserAuthentication().getName());
+	  map.put("openId", "1");
+         return map;
+	}
+
 }

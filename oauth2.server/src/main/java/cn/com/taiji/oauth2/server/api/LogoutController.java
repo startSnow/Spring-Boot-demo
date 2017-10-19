@@ -45,7 +45,7 @@ public class LogoutController {
 	 * @author chixue
 	 * @date 2017年3月30日
 	 */
-	@RequestMapping(value = "/revoke-token", method = RequestMethod.POST)
+	@RequestMapping(value = "/revoke-token", method = RequestMethod.DELETE)
 	public void logout(HttpServletRequest request,
 			HttpServletResponse responsel) {
 	String authHeader = request.getHeader("Authorization");

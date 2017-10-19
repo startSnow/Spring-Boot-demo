@@ -26,8 +26,6 @@ public class SsoAuthProvider implements AuthenticationProvider {
 //TODO 缺少跟本地用户表匹对代码
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-        log.debug("自定义provider调用");
-        List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("read"));
 
         String username = authentication.getName();
         System.out.println(username);
